@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#070a0e">
+  <title>Palm Manual — あなたの取扱説明書</title>
+  <meta name="description" content="手を撮るだけで、あなたの取扱説明書が生まれる。UX検証用プロトタイプ。">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="background" aria-hidden="true">
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+    <div class="bg-fog"></div>
+  </div>
+
+  <main id="app" class="app">
+
+    <!-- ===================== 1. TOP ===================== -->
+    <section id="screen-top" class="screen screen-top is-active" data-screen="top" aria-hidden="false">
+      <div class="brand-mark" aria-hidden="true">
+        <span class="brand-hand" role="img" aria-label="手のひら"></span>
+      </div>
+      <h1 class="brand-title">Palm&nbsp;Manual</h1>
+      <p class="top-copy">
+        <span>手を撮るだけで、</span>
+        <span>あなたの取扱説明書が生まれる。</span>
+      </p>
+      <p class="top-note">写真はこの端末の中だけで使用されます。</p>
+      <button type="button" class="btn btn-primary" data-goto="name" id="btnStart">診断してみる</button>
+    </section>
+
+    <!-- ===================== 2. 名前入力 ===================== -->
+    <section id="screen-name" class="screen" data-screen="name" aria-hidden="true">
+      <p class="step-label">STEP&nbsp;1&nbsp;/&nbsp;4</p>
+      <h2 class="screen-title">なんて呼べばいい？</h2>
+      <div class="field">
+        <label for="inputName" class="visually-hidden">名前またはニックネーム</label>
+        <input type="text" id="inputName" class="text-input" maxlength="20" placeholder="ニックネームでもOK" autocomplete="off" enterkeyhint="next">
+        <p class="field-error" id="nameError" role="alert"></p>
+      </div>
+      <div class="nav-row">
+        <button type="button" class="btn btn-ghost" data-back>戻る</button>
+        <button type="button" class="btn btn-primary" id="btnNameNext">次へ</button>
+      </div>
+    </section>
+
+    <!-- ===================== 3. 左手写真 ===================== -->
+    <section id="screen-left" class="screen" data-screen="left" aria-hidden="true">
+      <p class="step-label">STEP&nbsp;2&nbsp;/&nbsp;4</p>
+      <h2 class="screen-title">まず、左手を見せてください</h2>
+      <p class="screen-desc">手のひら全体が入るように、明るい場所で撮ってください。</p>
+
+      <div class="photo-area" id="leftPhotoArea">
+        <label class="drop-zone" for="inputLeft" id="leftDropZone">
+          <span class="cam-icon" aria-hidden="true"></span>
+          <span class="drop-title">左手の写真を選ぶ</span>
+          <span class="drop-sub">タップで撮影・選択できます</span>
+        </label>
+        <img id="leftPreview" class="photo-preview" alt="左手のプレビュー" hidden>
+        <input type="file" id="inputLeft" class="visually-hidden" accept="image/*" capture="environment">
+      </div>
+
+      <div class="nav-row">
+        <button type="button" class="btn btn-ghost" data-back>戻る</button>
+        <button type="button" class="btn btn-ghost" id="btnLeftRetake" hidden>撮り直す</button>
+        <button type="button" class="btn btn-primary" id="btnLeftNext" disabled>これでOK</button>
+      </div>
+    </section>
+
+    <!-- ===================== 4. 右手写真 ===================== -->
+    <section id="screen-right" class="screen" data-screen="right" aria-hidden="true">
+      <p class="step-label">STEP&nbsp;3&nbsp;/&nbsp;4</p>
+      <h2 class="screen-title">次は、右手。</h2>
+      <p class="screen-desc">指先から手首まで入ると、きれいに読み取れます。</p>
+
+      <div class="photo-area" id="rightPhotoArea">
+        <label class="drop-zone" for="inputRight" id="rightDropZone">
+          <span class="cam-icon" aria-hidden="true"></span>
+          <span class="drop-title">右手の写真を選ぶ</span>
+          <span class="drop-sub">タップで撮影・選択できます</span>
+        </label>
+        <img id="rightPreview" class="photo-preview" alt="右手のプレビュー" hidden>
+        <input type="file" id="inputRight" class="visually-hidden" accept="image/*" capture="environment">
+      </div>
+
+      <div class="nav-row">
+        <button type="button" class="btn btn-ghost" data-back>戻る</button>
+        <button type="button" class="btn btn-ghost" id="btnRightRetake" hidden>撮り直す</button>
+        <button type="button" class="btn btn-primary" id="btnRightNext" disabled>これでOK</button>
+      </div>
+    </section>
+
+    <!-- ===================== 5. ANALYZING ===================== -->
+    <section id="screen-analyzing" class="screen" data-screen="analyzing" aria-hidden="true">
+      <div class="analyze-core" role="status" aria-live="polite">
+        <div class="core-ring">
+          <div class="core-hand" aria-hidden="true"></div>
+        </div>
+        <p class="analyze-text" id="analyzeText">手のひらを読み解いています…</p>
+        <div class="analyze-dots" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 6. RESULT ===================== -->
+    <section id="screen-result" class="screen" data-screen="result" aria-hidden="true">
+      <p class="result-eyebrow">YOUR&nbsp;MANUAL</p>
+      <h2 class="result-name" id="resultName">取扱説明書</h2>
+
+      <div class="result-card result-primary" id="resultPrimaryCard">
+        <div class="type-glyph" id="primaryGlyph" aria-hidden="true">❋</div>
+        <div class="type-name" id="primaryNameJa">風</div>
+        <div class="type-name-en" id="primaryNameEn">WIND</div>
+        <p class="type-meaning" id="primaryMeaning">世界を広げる人</p>
+      </div>
+
+      <div class="secondary-row">
+        <span class="secondary-label">Secondary</span>
+        <span class="secondary-value" id="secondaryValue">光 / PRISM</span>
+      </div>
+
+      <div class="title-block">
+        <p class="title-label">固有愛称</p>
+        <p class="title-value" id="resultTitle">《まだ見ぬ道の探索者》</p>
+      </div>
+
+      <section class="result-section" aria-labelledby="traitsHeading">
+        <h3 id="traitsHeading" class="section-heading">あなたの特徴</h3>
+        <ul class="trait-list" id="traitList">
+          <li><span class="trait-label">—</span><span class="trait-stars"></span></li>
+        </ul>
+      </section>
+
+      <section class="result-section" aria-labelledby="manualHeading">
+        <h3 id="manualHeading" class="section-heading">取扱説明書</h3>
+        <ol class="manual-list" id="manualList">
+          <li>
+            <div class="manual-key">起動スイッチ</div>
+            <div class="manual-value">—</div>
+          </li>
+        </ol>
+      </section>
+
+      <div class="future-buttons">
+        <button type="button" class="btn btn-secondary" id="btnWorld">あなたの世界を見る</button>
+        <button type="button" class="btn btn-secondary" id="btnFriends">友達とやってみる</button>
+      </div>
+
+      <button type="button" class="btn btn-ghost btn-retry" id="btnRetry">もう一度診断する</button>
+    </section>
+
+  </main>
+
+  <!-- 将来機能トースト -->
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden>
+    <span id="toastText">この機能は次のバージョンで追加予定です</span>
+  </div>
+
+  <script src="types.js"></script>
+  <script src="diagnosis.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
