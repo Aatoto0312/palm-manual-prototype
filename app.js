@@ -1,5 +1,5 @@
 /** ============================================================
- *  Palm Manual Prototype v0.1
+ *  Palm Manual Prototype v0.1.1
  *  app.js — SPA画面遷移・写真プレビュー・診断演出・結果描画
  * ============================================================ */
 
@@ -38,6 +38,7 @@
     // 名前: Enterで次へ
     el.inputName.addEventListener('input', clearNameError);
     el.inputName.addEventListener('keydown', onNameKeydown);
+    el.btnNameNext.addEventListener('click', goRightFromName);
 
     // 写真: 左手
     bindPhoto('left');
@@ -91,6 +92,7 @@
     el.resultTitle = $('resultTitle');
     el.traitList = $('traitList');
     el.manualList = $('manualList');
+    el.deepList = $('deepList');
 
     el.btnWorld = $('btnWorld');
     el.btnFriends = $('btnFriends');
@@ -113,6 +115,9 @@
     }
     next.classList.add('is-active');
     next.setAttribute('aria-hidden', 'false');
+
+    // 画面切替時は必ず上端へ戻す（長文画面のアクセス時対策）
+    window.scrollTo(0, 0);
 
     if (id === 'name') {
       setTimeout(function () { el.inputName.focus(); }, 120);
@@ -303,7 +308,7 @@
     // Primary
     el.resultPrimaryCard.setAttribute('data-type', r.primary.id);
     el.primaryGlyph.textContent = r.primary.glyph;
-    el.primaryNameJa.textContent = r.primary.nameJa + ' / ' + r.primary.nameEn;
+    el.primaryNameJa.textContent = r.primary.nameJa;
     el.primaryNameEn.textContent = r.primary.nameEn + ' · ' + r.primary.keywords;
     el.primaryMeaning.textContent = r.primary.meaning;
 
@@ -354,6 +359,28 @@
       li.appendChild(key);
       li.appendChild(value);
       el.manualList.appendChild(li);
+    });
+
+    // 詳しい取扱説明書
+    el.deepList.innerHTML = '';
+    r.deepKeys.forEach(function (key) {
+      var body = r.deep[key.id] || '';
+      if (!body) return;
+
+      var item = document.createElement('div');
+      item.className = 'deep-item';
+
+      var title = document.createElement('h4');
+      title.className = 'deep-item-title';
+      title.textContent = key.label;
+
+      var p = document.createElement('p');
+      p.className = 'deep-item-body';
+      p.textContent = body;
+
+      item.appendChild(title);
+      item.appendChild(p);
+      el.deepList.appendChild(item);
     });
   }
 

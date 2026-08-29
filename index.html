@@ -27,16 +27,21 @@
         <span>手を撮るだけで、</span>
         <span>あなたの取扱説明書が生まれる。</span>
       </p>
-      <p class="top-note">写真はこの端末の中だけで使用されます。</p>
+      <ul class="privacy-list" aria-label="プライバシー">
+        <li><span class="pl-ic" aria-hidden="true">🔒</span>手の写真は保存されません</li>
+        <li><span class="pl-ic" aria-hidden="true">👤</span>本名・会員登録は不要です</li>
+        <li><span class="pl-ic" aria-hidden="true">🔗</span>友達に共有されるのは診断結果だけです</li>
+      </ul>
       <button type="button" class="btn btn-primary" data-goto="name" id="btnStart">診断してみる</button>
     </section>
 
     <!-- ===================== 2. 名前入力 ===================== -->
     <section id="screen-name" class="screen" data-screen="name" aria-hidden="true">
       <p class="step-label">STEP&nbsp;1&nbsp;/&nbsp;4</p>
-      <h2 class="screen-title">なんて呼べばいい？</h2>
+      <h2 class="screen-title">あなたを何と呼べばいい？</h2>
+      <p class="screen-desc">本名じゃなくてOK。ニックネームでも大丈夫です。</p>
       <div class="field">
-        <label for="inputName" class="visually-hidden">名前またはニックネーム</label>
+        <label for="inputName" class="visually-hidden">表示名またはニックネーム</label>
         <input type="text" id="inputName" class="text-input" maxlength="20" placeholder="ニックネームでもOK" autocomplete="off" enterkeyhint="next">
         <p class="field-error" id="nameError" role="alert"></p>
       </div>
@@ -143,6 +148,21 @@
           </li>
         </ol>
       </section>
+
+      <section class="result-section" aria-labelledby="deepHeading">
+        <h3 id="deepHeading" class="section-heading">詳しい取扱説明書</h3>
+        <div class="deep-list" id="deepList"></div>
+      </section>
+
+      <details class="result-details" id="howToRead">
+        <summary>どうしてこの結果になった？</summary>
+        <div class="details-body">
+          <p>現在のv0.1.1では、画面体験を検証するためにモック結果を使用しています。本物の手相（生命線・知能線など）は読み取っていません。</p>
+          <p>今後は、手から取得した複数の特徴を独自ルールで組み合わせ、結果を生成する予定です。</p>
+        </div>
+      </details>
+
+      <p class="share-note">🔒 共有されるのは結果だけ。<br>元の手の写真は含まれません。</p>
 
       <div class="future-buttons">
         <button type="button" class="btn btn-secondary" id="btnWorld">あなたの世界を見る</button>

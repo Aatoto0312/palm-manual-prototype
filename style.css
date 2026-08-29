@@ -141,11 +141,25 @@ body {
 }
 .top-copy span { display: block; }
 
-.top-note {
-  margin: 0 0 40px;
-  font-size: 12px;
-  color: var(--text-faint);
+.privacy-list {
+  list-style: none;
+  margin: 0 0 36px;
+  padding: 14px 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.6;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
+.privacy-list li { display: flex; align-items: center; gap: 10px; }
+.pl-ic { font-size: 15px; line-height: 1; filter: drop-shadow(0 0 6px rgba(138, 180, 255, 0.3)); }
 
 /* ===================== ボタン ===================== */
 .btn {
@@ -459,6 +473,83 @@ body {
   margin-top: 14px;
   flex: none;
   width: 100%;
+}
+
+/* ===================== 詳しい取扱説明書 ===================== */
+.deep-list { display: flex; flex-direction: column; gap: 20px; }
+.deep-item {
+  border-left: 2px solid var(--core);
+  padding-left: 14px;
+}
+.deep-item-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 0 0 6px;
+  letter-spacing: 0.04em;
+}
+.deep-item-body {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.9;
+  color: var(--text);
+  word-break: break-word;
+}
+
+/* ===================== 「どう読んだ？」 ===================== */
+.result-details {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  font-size: 14px;
+  color: var(--text-dim);
+  line-height: 1.8;
+}
+.result-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.result-details summary::-webkit-details-marker { display: none; }
+.result-details summary::after {
+  content: "＋";
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--text-faint);
+  flex: none;
+}
+.result-details[open] summary::after { content: "−"; }
+.details-body {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  word-break: break-word;
+}
+.details-body p { margin: 0 0 10px; }
+.details-body p:last-child { margin-bottom: 0; }
+
+/* ===================== 共有について ===================== */
+.share-note {
+  margin: 6px 0 14px;
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--text-dim);
+  text-align: center;
+  line-height: 1.7;
+  background: rgba(45, 212, 191, 0.08);
+  border: 1px solid rgba(45, 212, 191, 0.22);
+  border-radius: 14px;
+  word-break: break-word;
 }
 
 /* ===================== トースト ===================== */
