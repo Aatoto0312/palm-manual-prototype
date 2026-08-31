@@ -84,15 +84,20 @@
 
     el.resultName = $('resultName');
     el.resultPrimaryCard = $('resultPrimaryCard');
+    el.resultSecondaryCard = $('resultSecondaryCard');
     el.primaryGlyph = $('primaryGlyph');
     el.primaryNameJa = $('primaryNameJa');
     el.primaryNameEn = $('primaryNameEn');
     el.primaryMeaning = $('primaryMeaning');
-    el.secondaryValue = $('secondaryValue');
+    el.secondaryGlyph = $('secondaryGlyph');
+    el.secondaryNameJa = $('secondaryNameJa');
+    el.secondaryNameEn = $('secondaryNameEn');
     el.resultTitle = $('resultTitle');
-    el.traitList = $('traitList');
-    el.manualList = $('manualList');
+    el.resultSummary = $('resultSummary');
+    el.personCoreGrid = $('personCoreGrid');
+    el.combinationList = $('combinationList');
     el.deepList = $('deepList');
+    el.howToReadText = $('howToReadText');
 
     el.btnWorld = $('btnWorld');
     el.btnFriends = $('btnFriends');
@@ -313,52 +318,85 @@
     el.primaryMeaning.textContent = r.primary.meaning;
 
     // Secondary
-    el.secondaryValue.textContent = r.secondary.nameJa + ' / ' + r.secondary.nameEn;
+    el.resultSecondaryCard.setAttribute('data-type', r.secondary.id);
+    el.secondaryGlyph.textContent = r.secondary.glyph;
+    el.secondaryNameJa.textContent = r.secondary.nameJa;
+    el.secondaryNameEn.textContent = r.secondary.nameEn;
 
     // 固有愛称
     el.resultTitle.textContent = '《' + r.title + '》';
+    el.resultSummary.textContent = r.summary;
 
-    // 特徴
-    el.traitList.innerHTML = '';
-    r.traits.forEach(function (t) {
-      var li = document.createElement('li');
+    // PersonCore 8軸
+    el.personCoreGrid.innerHTML = '';
+    r.categories.forEach(function (category) {
+      var group = document.createElement('section');
+      group.className = 'core-category';
+      group.setAttribute('data-category', category.id);
 
-      var label = document.createElement('span');
-      label.className = 'trait-label';
-      label.textContent = t.label;
+      var heading = document.createElement('h4');
+      heading.className = 'core-category-title';
+      heading.textContent = category.label;
+      group.appendChild(heading);
 
-      var stars = document.createElement('span');
-      stars.className = 'trait-stars';
-      var filled = '★'.repeat(t.star);
-      var empty = '☆'.repeat(5 - t.star);
-      var full = document.createTextNode(filled);
-      var emptySpan = document.createElement('span');
-      emptySpan.className = 'empty';
-      emptySpan.textContent = empty;
-      stars.appendChild(full);
-      stars.appendChild(emptySpan);
+      var axes = document.createElement('div');
+      axes.className = 'core-axis-list';
+      r.coreAxes.forEach(function (axis) {
+        if (axis.category !== category.id) return;
+        var item = document.createElement('div');
+        item.className = 'core-axis';
 
-      li.appendChild(label);
-      li.appendChild(stars);
-      el.traitList.appendChild(li);
+        var copy = document.createElement('div');
+        copy.className = 'core-axis-copy';
+        var label = document.createElement('strong');
+        label.textContent = axis.label;
+        var description = document.createElement('span');
+        description.textContent = axis.description;
+        copy.appendChild(label);
+        copy.appendChild(description);
+
+        var stars = document.createElement('span');
+        stars.className = 'core-stars';
+        stars.setAttribute('aria-label', axis.label + 'の傾向 ' + axis.value + '/5');
+        var filled = document.createElement('span');
+        filled.textContent = '★'.repeat(axis.value);
+        var empty = document.createElement('span');
+        empty.className = 'empty';
+        empty.textContent = '☆'.repeat(5 - axis.value);
+        stars.appendChild(filled);
+        stars.appendChild(empty);
+
+        item.appendChild(copy);
+        item.appendChild(stars);
+        axes.appendChild(item);
+      });
+      group.appendChild(axes);
+      el.personCoreGrid.appendChild(group);
     });
 
-    // 取扱説明書
-    el.manualList.innerHTML = '';
-    r.manual.forEach(function (val, i) {
-      var li = document.createElement('li');
+    // 組み合わせ解釈
+    el.combinationList.innerHTML = '';
+    r.combinations.forEach(function (combination) {
+      var item = document.createElement('article');
+      item.className = 'combination-card';
 
-      var key = document.createElement('div');
-      key.className = 'manual-key';
-      key.textContent = r.manualKeys[i] || ('項目' + (i + 1));
+      var axes = document.createElement('p');
+      axes.className = 'combination-axes';
+      axes.textContent = combination.axes.map(function (id) {
+        var axis = r.coreAxes.find(function (candidate) { return candidate.id === id; });
+        return axis ? axis.label : id;
+      }).join(' × ');
 
-      var value = document.createElement('div');
-      value.className = 'manual-value';
-      value.textContent = val;
+      var heading = document.createElement('h4');
+      heading.textContent = combination.headline;
+      var body = document.createElement('p');
+      body.className = 'combination-body';
+      body.textContent = combination.text;
 
-      li.appendChild(key);
-      li.appendChild(value);
-      el.manualList.appendChild(li);
+      item.appendChild(axes);
+      item.appendChild(heading);
+      item.appendChild(body);
+      el.combinationList.appendChild(item);
     });
 
     // 詳しい取扱説明書
@@ -382,6 +420,8 @@
       item.appendChild(p);
       el.deepList.appendChild(item);
     });
+
+    el.howToReadText.textContent = r.howToRead;
   }
 
   /* ===================== トースト ===================== */

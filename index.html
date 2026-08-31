@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#070a0e">
+  <meta name="theme-color" content="#f5f0df">
   <title>Palm Manual — あなたの取扱説明書</title>
   <meta name="description" content="手を撮るだけで、あなたの取扱説明書が生まれる。UX検証用プロトタイプ。">
   <link rel="stylesheet" href="style.css">
@@ -115,50 +115,61 @@
       <p class="result-eyebrow">YOUR&nbsp;MANUAL</p>
       <h2 class="result-name" id="resultName">取扱説明書</h2>
 
-      <div class="result-card result-primary" id="resultPrimaryCard">
-        <div class="type-glyph" id="primaryGlyph" aria-hidden="true">❋</div>
-        <div class="type-name" id="primaryNameJa">風</div>
-        <div class="type-name-en" id="primaryNameEn">WIND</div>
-        <p class="type-meaning" id="primaryMeaning">世界を広げる人</p>
-      </div>
-
-      <div class="secondary-row">
-        <span class="secondary-label">Secondary</span>
-        <span class="secondary-value" id="secondaryValue">光 / PRISM</span>
+      <div class="type-pair" id="typePair" aria-label="第一属性と第二属性">
+        <article class="result-card result-primary" id="resultPrimaryCard">
+          <span class="type-rank">PRIMARY</span>
+          <div class="type-glyph" id="primaryGlyph" aria-hidden="true">❋</div>
+          <div class="type-name" id="primaryNameJa">風</div>
+          <div class="type-name-en" id="primaryNameEn">WIND</div>
+          <p class="type-meaning" id="primaryMeaning">世界を広げる人</p>
+        </article>
+        <span class="type-pair-mark" aria-hidden="true">×</span>
+        <article class="result-card result-secondary" id="resultSecondaryCard">
+          <span class="type-rank">SECONDARY</span>
+          <div class="type-glyph" id="secondaryGlyph" aria-hidden="true">◈</div>
+          <div class="type-name" id="secondaryNameJa">光</div>
+          <div class="type-name-en" id="secondaryNameEn">PRISM</div>
+        </article>
       </div>
 
       <div class="title-block">
-        <p class="title-label">固有愛称</p>
+        <p class="title-label">あなたの固有タイトル</p>
         <p class="title-value" id="resultTitle">《まだ見ぬ道の探索者》</p>
       </div>
 
-      <section class="result-section" aria-labelledby="traitsHeading">
-        <h3 id="traitsHeading" class="section-heading">あなたの特徴</h3>
-        <ul class="trait-list" id="traitList">
-          <li><span class="trait-label">—</span><span class="trait-stars"></span></li>
-        </ul>
+      <p class="result-summary" id="resultSummary">あなたらしさを一言で紹介します。</p>
+
+      <section class="result-section core-section" aria-labelledby="personCoreHeading">
+        <div class="section-intro">
+          <p class="section-kicker">PERSON CORE</p>
+          <h3 id="personCoreHeading" class="section-heading">8つの傾向ステータス</h3>
+          <p>星は能力や優劣ではなく、その傾向の強さです。</p>
+        </div>
+        <div class="person-core-grid" id="personCoreGrid"></div>
       </section>
 
-      <section class="result-section" aria-labelledby="manualHeading">
-        <h3 id="manualHeading" class="section-heading">取扱説明書</h3>
-        <ol class="manual-list" id="manualList">
-          <li>
-            <div class="manual-key">起動スイッチ</div>
-            <div class="manual-value">—</div>
-          </li>
-        </ol>
+      <section class="result-section" aria-labelledby="combinationHeading">
+        <div class="section-intro">
+          <p class="section-kicker">COMBINATION</p>
+          <h3 id="combinationHeading" class="section-heading">組み合わせで見えること</h3>
+          <p>ひとつの星だけではなく、2つの傾向を重ねて読みます。</p>
+        </div>
+        <div class="combination-list" id="combinationList"></div>
       </section>
 
       <section class="result-section" aria-labelledby="deepHeading">
-        <h3 id="deepHeading" class="section-heading">詳しい取扱説明書</h3>
+        <div class="section-intro">
+          <p class="section-kicker">YOUR MANUAL</p>
+          <h3 id="deepHeading" class="section-heading">詳しい取扱説明書</h3>
+        </div>
         <div class="deep-list" id="deepList"></div>
       </section>
 
       <details class="result-details" id="howToRead">
-        <summary>どうしてこの結果になった？</summary>
+        <summary>どう読んだ？</summary>
         <div class="details-body">
-          <p>現在のv0.1.1では、画面体験を検証するためにモック結果を使用しています。本物の手相（生命線・知能線など）は読み取っていません。</p>
-          <p>今後は、手から取得した複数の特徴を独自ルールで組み合わせ、結果を生成する予定です。</p>
+          <p id="howToReadText">v0.2では体験検証のため、手の写真から作ったモックシードをもとにPersonCoreを生成しています。実際の手の特徴解析は今後実装予定です。</p>
+          <p>これは科学的な性格判定ではありません。自分を楽しく見直すためのエンタメ体験です。</p>
         </div>
       </details>
 
@@ -180,6 +191,7 @@
   </div>
 
   <script src="types.js"></script>
+  <script src="person-core.js"></script>
   <script src="diagnosis.js"></script>
   <script src="app.js"></script>
 </body>

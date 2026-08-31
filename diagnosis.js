@@ -655,34 +655,20 @@ function buildSeed(input) {
  * @returns 結果オブジェクト
  */
 function diagnose(input) {
-  const seed = buildSeed(input);
-  const rng = mulberry32(seed);
-
-  const idx = Math.floor(rng() * RESULT_PATTERNS.length) % RESULT_PATTERNS.length;
-  const pattern = RESULT_PATTERNS[idx];
-
-  const primary = PALM_TYPES[pattern.primary];
-  const secondary = PALM_TYPES[pattern.secondary];
-
-  return {
-    seed: seed,
-    pattern: pattern.type,
-    name: String(input.name || '').trim(),
-    primary: primary,
-    secondary: secondary,
-    title: pattern.title,
-    traits: pattern.traits,
-    manualKeys: MANUAL_KEYS,
-    manual: pattern.manual,
-    deepKeys: DEEP_KEYS,
-    deep: pattern.deep
-  };
+  if (!window.PalmPersonCore) {
+    throw new Error('PalmPersonCore must be loaded before diagnosis.js');
+  }
+  const result = window.PalmPersonCore.buildResultData(input);
+  result.primary = PALM_TYPES[result.primary.id];
+  result.secondary = PALM_TYPES[result.secondary.id];
+  return result;
 }
 
 /** 属性テーブル（UIやデバッグ用に公開） */
 window.PalmDiagnosis = {
   diagnose,
-  buildSeed,
+  buildSeed: function (input) { return window.PalmPersonCore.buildSeed(input); },
+  buildLegacySeed: buildSeed,
   PALM_TYPES,
   TYPE_IDS,
   RESULT_PATTERNS,
