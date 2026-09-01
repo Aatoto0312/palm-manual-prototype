@@ -24,10 +24,29 @@ test('PersonCoreをdiagnosisより先に読み込む', () => {
   assert.ok(personCoreIndex < diagnosisIndex);
 });
 
+test('表示helperをappより先に読み込む', () => {
+  const viewIndex = html.indexOf('src="result-view.js"');
+  const appIndex = html.indexOf('src="app.js"');
+  assert.notEqual(viewIndex, -1);
+  assert.ok(viewIndex < appIndex);
+});
+
+test('TOPは体験の3ステップと安心材料を短く示す', () => {
+  assert.match(html, /class="experience-steps"/);
+  assert.match(html, /写真を選ぶ/);
+  assert.match(html, /8つの傾向/);
+  assert.match(html, /取扱説明書/);
+  assert.match(html, /class="privacy-badges"/);
+  assert.match(html, /本名不要/);
+  assert.match(html, /登録不要/);
+  assert.match(html, /写真は保存されません/);
+  assert.match(html, /結果だけ共有/);
+});
+
 test('RESULTは指定された情報優先順位で並ぶ', () => {
   const orderedIds = [
     'typePair', 'resultTitle', 'resultSummary', 'personCoreGrid',
-    'combinationList', 'deepList', 'howToRead'
+    'featuredCombinationList', 'deepList', 'howToRead'
   ];
   const positions = orderedIds.map(indexOfId);
   assert.deepEqual(positions, positions.slice().sort((a, b) => a - b));
@@ -50,9 +69,30 @@ test('どう読んだ？はモックseedと将来の特徴解析を明記する'
 
 test('rendererは8軸と組み合わせ解釈を結果データから描画する', () => {
   assert.match(app, /r\.coreAxes\.forEach/);
-  assert.match(app, /r\.combinations\.forEach/);
+  assert.match(app, /rankCombinations\(r\.combinations\)/);
   assert.match(app, /'★'\.repeat\(axis\.value\)/);
   assert.match(app, /'☆'\.repeat\(5 - axis\.value\)/);
+});
+
+test('軸は点数ではなく傾向の言葉と肯定的タイプ名を描画する', () => {
+  assert.match(app, /getAxisPresentation\(axis\.id, axis\.value\)/);
+  assert.match(app, /core-strength-label/);
+  assert.match(app, /core-type-label/);
+  assert.doesNotMatch(app, /axis\.value\s*\+\s*'\/5'/);
+});
+
+test('組み合わせは代表3件と残りの展開領域に分ける', () => {
+  assert.match(html, /あなたらしさが出ている3つ/);
+  assert.match(html, /id="featuredCombinationList"/);
+  assert.match(html, /id="moreCombinationList"/);
+  assert.match(html, /残り5つも見る/);
+  assert.match(app, /rankCombinations\(r\.combinations\)/);
+});
+
+test('詳細取扱説明書は8項目を個別に開閉できる', () => {
+  assert.match(app, /document\.createElement\('details'\)/);
+  assert.match(app, /deep-item-summary/);
+  assert.match(app, /r\.deepKeys\.forEach/);
 });
 
 test('4カテゴリの色テーマと横あふれ対策がある', () => {

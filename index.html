@@ -24,13 +24,18 @@
       </div>
       <h1 class="brand-title">Palm&nbsp;Manual</h1>
       <p class="top-copy">
-        <span>手を撮るだけで、</span>
-        <span>あなたの取扱説明書が生まれる。</span>
+        <span>手の写真から、8つの傾向を見つけます。</span>
+        <span>最後に、あなただけの取扱説明書が完成。</span>
       </p>
-      <ul class="privacy-list" aria-label="プライバシー">
-        <li><span class="pl-ic" aria-hidden="true">🔒</span>手の写真は保存されません</li>
-        <li><span class="pl-ic" aria-hidden="true">👤</span>本名・会員登録は不要です</li>
-        <li><span class="pl-ic" aria-hidden="true">🔗</span>友達に共有されるのは診断結果だけです</li>
+      <ol class="experience-steps" aria-label="診断の流れ">
+        <li><span aria-hidden="true">📷</span><strong>写真を選ぶ</strong></li>
+        <li><span aria-hidden="true">⭐</span><strong>8つの傾向</strong></li>
+        <li><span aria-hidden="true">📖</span><strong>取扱説明書</strong></li>
+      </ol>
+      <ul class="privacy-badges" aria-label="安心して使えるポイント">
+        <li><span aria-hidden="true">🔒</span>写真は保存されません</li>
+        <li><span aria-hidden="true">🌱</span>本名不要・登録不要</li>
+        <li><span aria-hidden="true">🎁</span>結果だけ共有されます</li>
       </ul>
       <button type="button" class="btn btn-primary" data-goto="name" id="btnStart">診断してみる</button>
     </section>
@@ -151,10 +156,14 @@
       <section class="result-section" aria-labelledby="combinationHeading">
         <div class="section-intro">
           <p class="section-kicker">COMBINATION</p>
-          <h3 id="combinationHeading" class="section-heading">組み合わせで見えること</h3>
-          <p>ひとつの星だけではなく、2つの傾向を重ねて読みます。</p>
+          <h3 id="combinationHeading" class="section-heading">あなたらしさが出ている3つ</h3>
+          <p>平均から離れた傾向の組み合わせを、特徴が表れやすい順に紹介します。</p>
         </div>
-        <div class="combination-list" id="combinationList"></div>
+        <div class="combination-list" id="featuredCombinationList"></div>
+        <details class="more-combinations" id="moreCombinations">
+          <summary>残り5つも見る</summary>
+          <div class="combination-list more-combination-list" id="moreCombinationList"></div>
+        </details>
       </section>
 
       <section class="result-section" aria-labelledby="deepHeading">
@@ -168,7 +177,7 @@
       <details class="result-details" id="howToRead">
         <summary>どう読んだ？</summary>
         <div class="details-body">
-          <p id="howToReadText">v0.2では体験検証のため、手の写真から作ったモックシードをもとにPersonCoreを生成しています。実際の手の特徴解析は今後実装予定です。</p>
+          <p id="howToReadText">v0.2.1では体験検証のため、手の写真から作ったモックシードをもとにPersonCoreを生成しています。実際の手の特徴解析は今後実装予定です。</p>
           <p>これは科学的な性格判定ではありません。自分を楽しく見直すためのエンタメ体験です。</p>
         </div>
       </details>
@@ -193,6 +202,7 @@
   <script src="types.js"></script>
   <script src="person-core.js"></script>
   <script src="diagnosis.js"></script>
+  <script src="result-view.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

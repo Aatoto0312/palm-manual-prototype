@@ -95,7 +95,9 @@
     el.resultTitle = $('resultTitle');
     el.resultSummary = $('resultSummary');
     el.personCoreGrid = $('personCoreGrid');
-    el.combinationList = $('combinationList');
+    el.featuredCombinationList = $('featuredCombinationList');
+    el.moreCombinationList = $('moreCombinationList');
+    el.moreCombinations = $('moreCombinations');
     el.deepList = $('deepList');
     el.howToReadText = $('howToReadText');
 
@@ -343,6 +345,7 @@
       axes.className = 'core-axis-list';
       r.coreAxes.forEach(function (axis) {
         if (axis.category !== category.id) return;
+        var presentation = window.PalmResultView.getAxisPresentation(axis.id, axis.value);
         var item = document.createElement('div');
         item.className = 'core-axis';
 
@@ -352,12 +355,15 @@
         label.textContent = axis.label;
         var description = document.createElement('span');
         description.textContent = axis.description;
+        var strength = document.createElement('span');
+        strength.className = 'core-strength-label';
+        strength.textContent = '傾向：' + presentation.strength;
         copy.appendChild(label);
-        copy.appendChild(description);
+        copy.appendChild(strength);
 
         var stars = document.createElement('span');
         stars.className = 'core-stars';
-        stars.setAttribute('aria-label', axis.label + 'の傾向 ' + axis.value + '/5');
+        stars.setAttribute('aria-label', axis.label + 'の傾向：' + presentation.strength);
         var filled = document.createElement('span');
         filled.textContent = '★'.repeat(axis.value);
         var empty = document.createElement('span');
@@ -366,8 +372,14 @@
         stars.appendChild(filled);
         stars.appendChild(empty);
 
+        var typeLabel = document.createElement('p');
+        typeLabel.className = 'core-type-label';
+        typeLabel.textContent = '「' + presentation.typeLabel + '」';
+
         item.appendChild(copy);
         item.appendChild(stars);
+        item.appendChild(typeLabel);
+        item.title = description.textContent;
         axes.appendChild(item);
       });
       group.appendChild(axes);
@@ -375,8 +387,12 @@
     });
 
     // 組み合わせ解釈
-    el.combinationList.innerHTML = '';
-    r.combinations.forEach(function (combination) {
+    el.featuredCombinationList.innerHTML = '';
+    el.moreCombinationList.innerHTML = '';
+    el.moreCombinations.open = false;
+    var rankedCombinations = window.PalmResultView.rankCombinations(r.combinations);
+
+    function createCombinationCard(combination) {
       var item = document.createElement('article');
       item.className = 'combination-card';
 
@@ -396,20 +412,28 @@
       item.appendChild(axes);
       item.appendChild(heading);
       item.appendChild(body);
-      el.combinationList.appendChild(item);
+      return item;
+    }
+
+    rankedCombinations.featured.forEach(function (combination) {
+      el.featuredCombinationList.appendChild(createCombinationCard(combination));
+    });
+    rankedCombinations.more.forEach(function (combination) {
+      el.moreCombinationList.appendChild(createCombinationCard(combination));
     });
 
     // 詳しい取扱説明書
     el.deepList.innerHTML = '';
-    r.deepKeys.forEach(function (key) {
+    r.deepKeys.forEach(function (key, index) {
       var body = r.deep[key.id] || '';
       if (!body) return;
 
-      var item = document.createElement('div');
+      var item = document.createElement('details');
       item.className = 'deep-item';
+      item.open = index === 0;
 
-      var title = document.createElement('h4');
-      title.className = 'deep-item-title';
+      var title = document.createElement('summary');
+      title.className = 'deep-item-summary';
       title.textContent = key.label;
 
       var p = document.createElement('p');
