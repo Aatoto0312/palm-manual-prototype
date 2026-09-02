@@ -192,6 +192,55 @@
       <button type="button" class="btn btn-ghost btn-retry" id="btnRetry">もう一度診断する</button>
     </section>
 
+    <!-- ===================== 7. WORLD ===================== -->
+    <section id="screen-world" class="screen screen-world" data-screen="world" aria-hidden="true">
+      <header class="world-header">
+        <p class="result-eyebrow">YOUR&nbsp;WORLD</p>
+        <p class="world-overline">あなたの世界</p>
+        <h2 class="world-title" id="worldTitle">灯る回廊の庭</h2>
+        <p class="world-tagline" id="worldTagline">景色の奥へ、道がゆっくり続いていく。</p>
+      </header>
+
+      <article class="world-card" id="worldCard">
+        <div class="world-visual" id="worldVisual" role="img" aria-label="PersonCoreから構成した仮世界">
+          <div class="world-layer world-sky"></div>
+          <div class="world-layer world-orb"></div>
+          <div class="world-layer world-island world-island-left"></div>
+          <div class="world-layer world-island world-island-right"></div>
+          <div class="world-layer world-mountain world-mountain-back"></div>
+          <div class="world-layer world-mountain world-mountain-front"></div>
+          <div class="world-layer world-buildings" id="worldBuildings"></div>
+          <div class="world-layer world-water"></div>
+          <div class="world-layer world-path world-path-main"></div>
+          <div class="world-layer world-path world-path-branch"></div>
+          <div class="world-layer world-lights" id="worldLights"></div>
+          <div class="world-layer world-mist"></div>
+        </div>
+        <div class="world-card-caption">
+          <span id="worldAffinity">WIND × VEIL</span>
+          <span>PROCEDURAL PREVIEW</span>
+        </div>
+      </article>
+
+      <p class="world-summary" id="worldSummary"></p>
+
+      <section class="world-panel" aria-labelledby="worldFeaturesHeading">
+        <p class="section-kicker">WORLD SPEC</p>
+        <h3 class="section-heading" id="worldFeaturesHeading">世界を構成する特徴</h3>
+        <dl class="world-feature-list" id="worldFeatureList"></dl>
+        <div class="world-motif-list" id="worldMotifList" aria-label="世界のモチーフ"></div>
+      </section>
+
+      <details class="world-panel world-reasoning" id="worldReasoning" open>
+        <summary>なぜこの世界？</summary>
+        <p class="world-rule-note">これは科学的な根拠ではなく、PersonCoreを景色へ置き換えるPalm Manual内の表現ルールです。</p>
+        <div class="world-reason-list" id="worldReasonList"></div>
+      </details>
+
+      <p class="world-share-placeholder">世界カードの共有機能は、今後ここに追加予定です。元の手の写真は含みません。</p>
+      <button type="button" class="btn btn-secondary world-back" id="btnWorldBack">取扱説明書へ戻る</button>
+    </section>
+
   </main>
 
   <!-- 将来機能トースト -->
@@ -203,6 +252,7 @@
   <script src="person-core.js"></script>
   <script src="diagnosis.js"></script>
   <script src="result-view.js"></script>
+  <script src="world-core.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

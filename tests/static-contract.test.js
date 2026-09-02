@@ -31,6 +31,39 @@ test('表示helperをappより先に読み込む', () => {
   assert.ok(viewIndex < appIndex);
 });
 
+test('world-coreをappより先に読み込む', () => {
+  const worldIndex = html.indexOf('src="world-core.js"');
+  const appIndex = html.indexOf('src="app.js"');
+  assert.notEqual(worldIndex, -1);
+  assert.ok(worldIndex < appIndex);
+});
+
+test('WORLD画面がありRESULTとの往復導線を持つ', () => {
+  assert.match(html, /id="screen-world"/);
+  assert.match(html, /id="btnWorld"/);
+  assert.match(html, /id="btnWorldBack"/);
+  assert.match(app, /show\('world'\)/);
+  assert.match(app, /show\('result'\)/);
+  assert.match(app, /PalmWorldCore\.buildWorldData/);
+});
+
+test('WORLD画面と世界共有情報に元画像を含めない', () => {
+  const start = html.indexOf('id="screen-world"');
+  const end = html.indexOf('</section>', html.indexOf('id="btnWorldBack"', start));
+  const markup = html.slice(start, end);
+  assert.doesNotMatch(markup, /<img\b|leftPreview|rightPreview|blob:|data:image/i);
+  assert.doesNotMatch(app, /worldSpec[^\n]*(left|right)(FileName|Size|Preview|\.url)/i);
+});
+
+test('WORLDのプロシージャル表示と320px向け横あふれ対策がある', () => {
+  assert.match(html, /id="worldVisual"/);
+  assert.match(html, /world-layer/);
+  assert.match(css, /\.world-visual/);
+  assert.match(css, /@media\s*\(max-width:\s*360px\)/);
+  assert.match(css, /\.screen-world[\s\S]*min-width:\s*0/);
+  assert.match(css, /\.world-card[\s\S]*overflow:\s*hidden/);
+});
+
 test('TOPは体験の3ステップと安心材料を短く示す', () => {
   assert.match(html, /class="experience-steps"/);
   assert.match(html, /写真を選ぶ/);

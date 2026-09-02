@@ -6,14 +6,16 @@
 (function () {
   'use strict';
 
-  var SCREENS = ['top', 'name', 'left', 'right', 'analyzing', 'result'];
+  var SCREENS = ['top', 'name', 'left', 'right', 'analyzing', 'result', 'world'];
 
   var el = {};
   var state = {
     name: '',
     left: null,   // { url, name, size }
     right: null,  // { url, name, size }
-    analyzingToken: 0
+    analyzingToken: 0,
+    result: null,
+    world: null
   };
 
   var analyzingTexts = [
@@ -50,7 +52,8 @@
     el.btnRightNext.addEventListener('click', startAnalyzing);
 
     // 結果ボタン
-    el.btnWorld.addEventListener('click', function () { showToast('この機能は次のバージョンで追加予定です'); });
+    el.btnWorld.addEventListener('click', openWorld);
+    el.btnWorldBack.addEventListener('click', function () { show('result'); });
     el.btnFriends.addEventListener('click', function () { showToast('この機能は次のバージョンで追加予定です'); });
     el.btnRetry.addEventListener('click', resetAll);
   }
@@ -104,6 +107,19 @@
     el.btnWorld = $('btnWorld');
     el.btnFriends = $('btnFriends');
     el.btnRetry = $('btnRetry');
+
+    el.worldCard = $('worldCard');
+    el.worldVisual = $('worldVisual');
+    el.worldTitle = $('worldTitle');
+    el.worldTagline = $('worldTagline');
+    el.worldSummary = $('worldSummary');
+    el.worldAffinity = $('worldAffinity');
+    el.worldFeatureList = $('worldFeatureList');
+    el.worldMotifList = $('worldMotifList');
+    el.worldReasonList = $('worldReasonList');
+    el.worldBuildings = $('worldBuildings');
+    el.worldLights = $('worldLights');
+    el.btnWorldBack = $('btnWorldBack');
 
     el.toast = $('toast');
     el.toastText = $('toastText');
@@ -164,6 +180,7 @@
       case 'right': show('left'); break;
       case 'analyzing': show('right'); break;
       case 'result': show('top'); break;
+      case 'world': show('result'); break;
       default: show('top');
     }
   }
@@ -309,6 +326,8 @@
     };
 
     var r = window.PalmDiagnosis.diagnose(input);
+    state.result = r;
+    state.world = null;
 
     el.resultName.textContent = r.name + 'の取扱説明書';
 
@@ -448,6 +467,95 @@
     el.howToReadText.textContent = r.howToRead;
   }
 
+  /* ===================== WORLD ===================== */
+  function openWorld() {
+    if (!state.result) return;
+    state.world = window.PalmWorldCore.buildWorldData(state.result);
+    renderWorld(state.world);
+    show('world');
+  }
+
+  function renderWorld(worldData) {
+    var profile = worldData.visualProfile;
+    var spec = worldData.worldSpec;
+
+    el.worldTitle.textContent = spec.title;
+    el.worldTagline.textContent = spec.tagline;
+    el.worldSummary.textContent = spec.summary;
+    el.worldAffinity.textContent = spec.affinities.primary + ' × ' + spec.affinities.secondary;
+
+    var style = el.worldVisual.style;
+    style.setProperty('--world-open', profile.openness);
+    style.setProperty('--world-branch', profile.branching);
+    style.setProperty('--world-focus', profile.destinationClarity);
+    style.setProperty('--world-connect', profile.connectivity);
+    style.setProperty('--world-motion', profile.motion);
+    style.setProperty('--world-history', profile.persistence);
+    style.setProperty('--world-detail', profile.sensitivity);
+    style.setProperty('--world-depth', profile.depth);
+    style.setProperty('--world-density', profile.complexity);
+    style.setProperty('--world-warmth', profile.warmth);
+    style.setProperty('--world-mystery', profile.mystery);
+    style.setProperty('--world-social', profile.socialDensity);
+    style.setProperty('--world-blend', profile.natureUrbanBlend);
+    style.setProperty('--world-vertical', profile.verticality);
+    el.worldCard.setAttribute('data-primary', spec.affinities.primary);
+    el.worldCard.setAttribute('data-secondary', spec.affinities.secondary);
+
+    renderRepeatedLayer(el.worldBuildings, 'world-building', 2 + Math.round(profile.socialDensity * 6));
+    renderRepeatedLayer(el.worldLights, 'world-light', 3 + Math.round(profile.sensitivity * 9));
+
+    el.worldFeatureList.innerHTML = '';
+    spec.features.forEach(function (feature) {
+      var term = document.createElement('dt');
+      term.textContent = feature.label;
+      var description = document.createElement('dd');
+      description.textContent = feature.value;
+      el.worldFeatureList.appendChild(term);
+      el.worldFeatureList.appendChild(description);
+    });
+
+    el.worldMotifList.innerHTML = '';
+    spec.motifs.forEach(function (motif) {
+      var chip = document.createElement('span');
+      chip.textContent = motif;
+      el.worldMotifList.appendChild(chip);
+    });
+
+    el.worldReasonList.innerHTML = '';
+    spec.reasoning.forEach(function (reason) {
+      var item = document.createElement('article');
+      item.className = 'world-reason';
+      var source = document.createElement('h4');
+      source.textContent = reason.source;
+      var interpretation = document.createElement('p');
+      interpretation.textContent = reason.interpretation;
+      var arrow = document.createElement('span');
+      arrow.className = 'world-reason-arrow';
+      arrow.setAttribute('aria-hidden', 'true');
+      arrow.textContent = '↓';
+      var effect = document.createElement('p');
+      effect.className = 'world-reason-effect';
+      effect.textContent = reason.visualEffect;
+      item.appendChild(source);
+      item.appendChild(interpretation);
+      item.appendChild(arrow);
+      item.appendChild(effect);
+      el.worldReasonList.appendChild(item);
+    });
+  }
+
+  function renderRepeatedLayer(container, className, count) {
+    container.innerHTML = '';
+    for (var i = 0; i < count; i++) {
+      var part = document.createElement('span');
+      part.className = className;
+      part.style.setProperty('--item-index', i);
+      part.style.setProperty('--item-count', count);
+      container.appendChild(part);
+    }
+  }
+
   /* ===================== トースト ===================== */
   var toastTimer = null;
   function showToast(msg) {
@@ -470,6 +578,8 @@
     if (state.right && state.right.url) URL.revokeObjectURL(state.right.url);
     state.left = null;
     state.right = null;
+    state.result = null;
+    state.world = null;
 
     el.inputName.value = '';
     clearNameError();

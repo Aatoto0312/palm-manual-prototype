@@ -1,6 +1,28 @@
-# Palm Manual v0.2.1
+# Palm Manual v0.3 "Your World"
 
 手の写真を入口に、自分の傾向を8つの軸と組み合わせで読む「人物取扱説明書」のUX検証用モックです。
+
+## v0.3 Your World
+
+診断結果のPersonCoreを、世界表現用の構造へ段階的に翻訳します。
+
+```text
+PersonCore
+  ↓
+VisualProfile
+  ↓
+WorldSpec
+  ↓
+Procedural World Preview
+  ↓
+future Image Generation AI
+```
+
+`VisualProfile`は世界の広がり、分岐、中心、接続、動き、奥行き、複雑さなど14個の連続値です。`WorldSpec`は環境、構図、モチーフ、色、象徴要素、変換理由、将来の画像生成用`imagePrompt`を持ちます。同じPersonCoreとPrimary / Secondaryからは、同じ世界が生成されます。
+
+RESULTの「あなたの世界を見る」からWORLD画面へ進むと、外部画像を使わないHTML/CSS製の仮世界が表示されます。空、光源、地形、道、水面、建物、灯りの構成がVisualProfileに応じて変化します。
+
+v0.3では画像生成APIを接続していません。将来は`world-core.js`が返す`worldSpec.imagePrompt`を画像生成層へ渡し、返された画像を現在のプロシージャル表示と差し替えられます。画像内に世界名や説明文を描かせず、それらはHTML側で表示する方針です。
 
 ## v0.2について
 
@@ -60,7 +82,8 @@ palm-manual/
 ├─ types.js          6属性の表示情報
 ├─ person-core.js    seed、8軸、組み合わせ、属性採点、結果データ生成
 ├─ diagnosis.js      公開診断入口と旧20パターンのフォールバック資料
-├─ app.js            画面遷移、写真プレビュー、DOM描画
+├─ world-core.js     VisualProfile、WorldSpec、画像生成用prompt
+├─ app.js            画面遷移、写真プレビュー、RESULT / WORLD描画
 └─ tests/            Node標準テストとブラウザ確認用fixture
 ```
 
@@ -73,6 +96,7 @@ palm-manual/
 - 写真は現在ブラウザ内のプレビューとseed用メタデータ取得だけに使います。
 - 結果画面に元の手写真を表示しません。
 - 共有結果に元画像を含めません。
+- WorldSpecやWORLD画面にも、写真名、blob URL、Base64、画像内容を含めません。
 
 ## 「どう読んだ？」の表示
 
