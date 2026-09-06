@@ -1,6 +1,7 @@
 /**
- * Palm Manual v0.3 — PersonCoreを世界表現へ翻訳する純粋関数群。
- * 写真入力は受け取らず、同じ診断結果から常に同じWorldSpecを返す。
+ * Palm Manual v0.4 "Hand Observation" — PersonCore / VisualProfile を世界構図表現へ翻訳する純粋関数群。
+ * 1つの固定レイアウトの色変えにとどまらず、道構図(pathStructure)、焦点構図(focalStructure)、
+ * 垂直構図(verticalStructure)、環境構図(environmentStructure)などの構図そのものを可変生成します。
  */
 (function (root, factory) {
   var api = factory();
@@ -55,8 +56,13 @@
     return Math.max(0, Math.min(1, Math.round(value * 1000) / 1000));
   }
 
+  /** 入力値を 0..1 へ正規化 */
   function n(value) {
-    return clamp((Number(value) - 1) / 4);
+    if (typeof value !== 'number') return 0.5;
+    // すでに 0..1 の連続値(rawPersonCore)の場合
+    if (value >= 0 && value <= 1) return clamp(value);
+    // ★1〜★5 の表示値の場合
+    return clamp((value - 1) / 4);
   }
 
   function mix() {
@@ -66,14 +72,21 @@
   }
 
   function buildVisualProfile(personCore) {
-    var core = n(personCore.core);
-    var path = n(personCore.path);
-    var curiosity = n(personCore.curiosity);
-    var connection = n(personCore.connection);
-    var ignition = n(personCore.ignition);
-    var persistence = n(personCore.persistence);
-    var sensor = n(personCore.sensor);
-    var depth = n(personCore.depth);
+    var coreObj = personCore || {};
+    // raw (0..1) があれば優先利用、なければ 1..5 を正規化
+    var getVal = function (key) {
+      if (coreObj.raw && typeof coreObj.raw[key] === 'number') return n(coreObj.raw[key]);
+      return n(coreObj[key]);
+    };
+
+    var core = getVal('core');
+    var path = getVal('path');
+    var curiosity = getVal('curiosity');
+    var connection = getVal('connection');
+    var ignition = getVal('ignition');
+    var persistence = getVal('persistence');
+    var sensor = getVal('sensor');
+    var depth = getVal('depth');
 
     return {
       openness: mix(curiosity, 1 - depth, 1 - core * 0.35),
@@ -150,15 +163,71 @@
     };
   }
 
+  /**
+   * v0.4 構図構造 (Structural Composition) の導出
+   * 固定レイアウトではなく、PersonCore / VisualProfile に応じて構図タイプ・要素数を算出
+   */
   function buildComposition(profile) {
+    // 道の構図構造: single(一本道), forked(分岐), radial(放射状), network(網状), layered(層状)
+    var pathType = 'single';
+    if (profile.branching > 0.70) pathType = 'network';
+    else if (profile.branching > 0.50) pathType = 'forked';
+    else if (profile.connectivity > 0.65) pathType = 'radial';
+    else if (profile.depth > 0.65) pathType = 'layered';
+
+    // 焦点構造: singleCenter(中央一極), dualCenter(二核), horizon(水平拡散), distributed(分散)
+    var focalType = 'singleCenter';
+    if (profile.destinationClarity > 0.65) focalType = 'singleCenter';
+    else if (profile.branching > 0.60) focalType = 'distributed';
+    else if (profile.connectivity > 0.55) focalType = 'dualCenter';
+    else focalType = 'horizon';
+
+    // 垂直構造: flat(平坦), terraced(段丘), towered(塔状), floating(浮島), subterranean(深層)
+    var verticalType = 'flat';
+    if (profile.verticality > 0.70) verticalType = 'towered';
+    else if (profile.verticality > 0.50) verticalType = 'terraced';
+    else if (profile.openness > 0.70) verticalType = 'floating';
+    else if (profile.mystery > 0.65) verticalType = 'subterranean';
+
+    // 環境構造: enclosed(閉鎖・庭), open(開放), mixed(複合)
+    var envType = 'mixed';
+    if (profile.openness > 0.65) envType = 'open';
+    else if (profile.openness < 0.35) envType = 'enclosed';
+
+    // 具体的な数値・カウントパラメータ（HTML/CSSレンダー用）
+    var buildingCount = Math.round(2 + profile.socialDensity * 6);
+    var lightCount = Math.round(2 + profile.sensitivity * 8);
+    var islandCount = Math.round(1 + profile.branching * 4);
+    var mountainCount = Math.round(1 + profile.verticality * 3);
+    var fogAmount = clamp(profile.mystery * 1.2, 0, 1);
+    var waterAmount = clamp(profile.connectivity * 0.8 + (1 - profile.verticality) * 0.2, 0, 1);
+    var layerCount = Math.round(3 + profile.depth * 3);
+
     return {
       focalPoint: level(profile.destinationClarity, '複数の小さな中心', '中景の灯る目印', '遠景の明確な光塔'),
       horizon: level(profile.openness, '建物と木々で囲まれた近い地平', '丘越しに見える地平', '画面を大きく横切る遠い地平線'),
-      pathStructure: level(profile.branching, '一本の大きな道', '要所で分かれる道', '橋・階段・水路が分岐する道網'),
+      pathStructureText: level(profile.branching, '一本の大きな道', '要所で分かれる道', '橋・階段・水路が分岐する道網'),
       depthLayers: level(profile.depth, '見渡せる三層', '手前・中景・遠景の四層', '地下から空まで続く六層'),
       density: level(profile.complexity, '余白を生かした低密度', '発見点を散らした中密度', '細部が重なる高密度'),
       movement: level(profile.motion, '静止に近い穏やかな構図', '水と雲がゆっくり導く構図', '風・光跡・流れが斜めに走る構図'),
-      camera: level(profile.openness, 'eye-level intimate view', 'slightly elevated wide view', 'wide panoramic elevated view')
+      camera: level(profile.openness, 'eye-level intimate view', 'slightly elevated wide view', 'wide panoramic elevated view'),
+      // v0.4 構造分類パラメータ
+      structures: {
+        pathStructure: pathType,
+        focalStructure: focalType,
+        verticalStructure: verticalType,
+        environmentStructure: envType
+      },
+      // 連続数パラメータ
+      counts: {
+        buildingCount: buildingCount,
+        lightCount: lightCount,
+        islandCount: islandCount,
+        mountainCount: mountainCount,
+        fogAmount: fogAmount,
+        waterAmount: waterAmount,
+        layerCount: layerCount
+      }
     };
   }
 
@@ -271,7 +340,7 @@
     var summary = describeFeature('openness', visualProfile.openness) + '世界です。' + describeFeature('branching', visualProfile.branching) + '。' + describeFeature('depth', visualProfile.depth) + 'ため、歩くほど景色の見え方が変わります。';
 
     return {
-      version: '0.3',
+      version: '0.4',
       title: title,
       tagline: tagline,
       summary: summary,
@@ -297,10 +366,14 @@
   }
 
   function buildWorldData(result) {
-    if (!result || !result.personCore) throw new Error('PersonCore result is required');
-    var primaryId = typeof result.primary === 'string' ? result.primary : result.primary.id;
-    var secondaryId = typeof result.secondary === 'string' ? result.secondary : result.secondary.id;
-    var visualProfile = buildVisualProfile(result.personCore);
+    if (!result) throw new Error('PersonCore result is required');
+    // rawPersonCore または personCore を受け取る
+    var coreInput = result.rawPersonCore || result.personCore;
+    if (!coreInput) throw new Error('PersonCore is required');
+
+    var primaryId = typeof result.primary === 'string' ? result.primary : (result.primary ? result.primary.id : 'WIND');
+    var secondaryId = typeof result.secondary === 'string' ? result.secondary : (result.secondary ? result.secondary.id : 'VEIL');
+    var visualProfile = buildVisualProfile(coreInput);
     return {
       visualProfile: visualProfile,
       worldSpec: buildWorldSpec(visualProfile, primaryId, secondaryId, result.combinations || [])
@@ -310,6 +383,7 @@
   return {
     PROFILE_KEYS: PROFILE_KEYS.slice(),
     buildVisualProfile: buildVisualProfile,
+    buildComposition: buildComposition,
     buildWorldSpec: buildWorldSpec,
     buildWorldData: buildWorldData
   };

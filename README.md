@@ -1,43 +1,55 @@
-# Palm Manual v0.3 "Your World"
+# Palm Manual v0.4 "Hand Observation"
 
-手の写真を入口に、自分の傾向を8つの軸と組み合わせで読む「人物取扱説明書」のUX検証用モックです。
+手の写真を入口に、自分の傾向を8つの軸と組み合わせで読む「人物取扱説明書」のUX検証プロトタイプです。
 
-## v0.3 Your World
+## v0.4 Architecture
 
-診断結果のPersonCoreを、世界表現用の構造へ段階的に翻訳します。
+v0.4では、従来の決定的なモックseed依存から、ブラウザ内Canvas画像解析によるピクセル観察ベースのパイプラインへ進化しました。
 
 ```text
-PersonCore
+Input Image
+  ↓
+HandObservation
+  ↓
+HandFingerprint
+  ↓
+continuous PersonCore (0.00〜1.00)
+  ↓
+display PersonCore (★1〜★5)
+  ↓
+Interpretation
   ↓
 VisualProfile
   ↓
-WorldSpec
+WorldSpec (構図・構造差)
   ↓
-Procedural World Preview
-  ↓
-future Image Generation AI
+Your World
 ```
 
-`VisualProfile`は世界の広がり、分岐、中心、接続、動き、奥行き、複雑さなど14個の連続値です。`WorldSpec`は環境、構図、モチーフ、色、象徴要素、変換理由、将来の画像生成用`imagePrompt`を持ちます。同じPersonCoreとPrimary / Secondaryからは、同じ世界が生成されます。
+※ 本システムは手画像から科学的・医学的に性格を推定したり、本物の手相占いをするサービスではありません。画像から客観的に観察できるエッジ密度、方向性の広がり、領域バランス、左右差などの視覚的特徴を、Palm Manual独自の象徴的ルールでPersonCoreおよび世界表現へ変換しています。
 
-RESULTの「あなたの世界を見る」からWORLD画面へ進むと、外部画像を使わないHTML/CSS製の仮世界が表示されます。空、光源、地形、道、水面、建物、灯りの構成がVisualProfileに応じて変化します。
+## HandObservation & HandFingerprint (v0.4)
 
-v0.3では画像生成APIを接続していません。将来は`world-core.js`が返す`worldSpec.imagePrompt`を画像生成層へ渡し、返された画像を現在のプロシージャル表示と差し替えられます。画像内に世界名や説明文を描かせず、それらはHTML側で表示する方針です。
+外部AI APIやサーバー通信を使わず、ブラウザ標準の Canvas / ImageData / TypedArray により以下を解析します。
 
-## v0.2について
+- **撮影品質**: 平均輝度、コントラスト、ラプラシアン分散によるぼやけ推定、撮影アドバイス生成
+- **構造特徴**: エッジ密度、方向性の多様性(Shannon Entropy)、水平/垂直/斜めエッジ比率
+- **領域密度**: 3x3グリッド分割による中心部/周辺部/上下左右の密度バランス
+- **左右差**: 左右の手画像の複雑さ差、密度差、方向性差、コントラスト差
+- **HandFingerprint**: 幾何特徴ベクトルとハッシュ値（元画像・Base64・Blob URLは保持・蓄積しません）
 
-本物の手画像解析や科学的な性格判定はまだ行いません。ニックネームと左右写真のファイル名・ファイルサイズから決定的なモックseedを作り、PersonCoreを生成します。同じ入力なら同じ結果になります。
+## PersonCore (continuous & display)
 
-PersonCoreの星は能力や優劣ではなく、その傾向の強さです。各軸を平均3へ寄せる補正は行わないため、★1や★5が複数ある結果も自然な人物像として扱います。
+8つの軸の意味・名称は維持しながら、内部では 0.00〜1.00 の連続値 `rawPersonCore` を保持します。UI表示用に ★1〜★5 の整数 `displayPersonCore` へ量子化しつつ、「同じ★★★★でも内部的には微妙に異なる値」を保持することで、Your World の世界生成へ細やかな個体差を反映させます。
 
-## v0.2.1のUX改善
+## Your World (構図・構造差)
 
-- TOPで「写真 → 8つの傾向 → 取扱説明書」の流れを先に説明します。
-- 各軸は点数ではなく、傾向の強さと肯定的なタイプ名で表示します。
-- 組み合わせ8件のうち、平均から離れて特徴が表れやすい3件を先に表示します。残り5件も展開して確認できます。
-- 詳細取扱説明書は8項目を維持し、項目ごとに開閉できるカードへ分割します。
+単に色が変わるだけでなく、PersonCoreおよびVisualProfileに応じて以下の世界の「構図・構造」そのものが可変生成されます。
 
-診断ロジック、seed、PersonCore、6属性計算はv0.2から変更していません。
+- **道構図 (`pathStructure`)**: 一本道 (`single`) / 分岐 (`forked`) / 放射状 (`radial`) / 網状 (`network`) / 層状 (`layered`)
+- **焦点構図 (`focalStructure`)**: 中央一極 (`singleCenter`) / 二核 (`dualCenter`) / 水平 (`horizon`) / 分散 (`distributed`)
+- **垂直構図 (`verticalStructure`)**: 平坦 (`flat`) / 段丘 (`terraced`) / 塔状 (`towered`) / 浮島 (`floating`) / 深層 (`subterranean`)
+- **環境構図 (`environmentStructure`)**: 閉鎖庭園 (`enclosed`) / 開放 (`open`) / 複合 (`mixed`)
 
 ## PersonCore 8軸
 
@@ -52,57 +64,32 @@ PersonCoreの星は能力や優劣ではなく、その傾向の強さです。�
 | 行動 | 粘り `persistence` | 続けて育てる強さ |
 | 感覚 | センサー `sensor` | 小さな変化を受け取る強さ |
 
-各値は整数1〜5です。
-
-## 組み合わせ解釈
-
-次の8組を low / mid / high の組み合わせとして解釈します。
-
-- 芯 × 道
-- 好奇心 × 道
-- 好奇心 × 粘り
-- つながり × 深さ
-- 初速 × 粘り
-- 芯 × センサー
-- 好奇心 × つながり
-- 初速 × 深さ
-
-各解釈は `id`, `axes`, `levels`, `values`, `headline`, `text`, `tags` を持ち、将来のAI文章生成へ渡しやすい構造です。
-
 ## 6属性
 
-WIND / PRISM / TIDE / ROOT / FORGE / VEIL は残しています。ただし診断本体ではなく、PersonCoreを覚えやすく伝える外向けラベルです。PersonCoreの加重スコアからPrimaryとSecondaryを選び、同じ属性が重複しないようにしています。
+WIND / PRISM / TIDE / ROOT / FORGE / VEIL （PersonCoreの加重スコアからPrimaryとSecondaryを選定）。
 
 ## ファイル構成
 
 ```text
 palm-manual/
-├─ index.html        RESULTを含むSPA画面構造
-├─ style.css         明るい図鑑・ステータスカード調UI
-├─ types.js          6属性の表示情報
-├─ person-core.js    seed、8軸、組み合わせ、属性採点、結果データ生成
-├─ diagnosis.js      公開診断入口と旧20パターンのフォールバック資料
-├─ world-core.js     VisualProfile、WorldSpec、画像生成用prompt
-├─ app.js            画面遷移、写真プレビュー、RESULT / WORLD描画
-└─ tests/            Node標準テストとブラウザ確認用fixture
+├─ index.html          RESULTを含むSPA画面構造
+├─ style.css           明るい図鑑・ステータスカード・撮影ガイドUI
+├─ types.js            6属性の表示情報
+├─ hand-observation.js Canvasピクセル解析・品質評価・HandFingerprint生成
+├─ person-core.js      continuous PersonCore, display PersonCore, 象徴変換ルール
+├─ diagnosis.js        公開診断入口と旧パターンのフォールバック資料
+├─ world-core.js       VisualProfile、可変構図WorldSpec、画像生成用prompt
+├─ result-view.js      表示用ヘルパー（傾向強度ラベル、優先順位付け）
+├─ app.js              画面遷移、撮影ガイド、非同期解析、RESULT/WORLD描画
+└─ tests/              Node標準テストおよびテストフィクスチャ
 ```
-
-`index.html` を直接開くだけで動きます。外部依存、ビルド、APIキー、サーバー、DB、ログインはありません。GitHub Pagesでも静的配信できます。
 
 ## プライバシー
 
 - 本名は不要で、ニックネームを使えます。
-- ログインや会員登録はありません。
-- 写真は現在ブラウザ内のプレビューとseed用メタデータ取得だけに使います。
-- 結果画面に元の手写真を表示しません。
-- 共有結果に元画像を含めません。
-- WorldSpecやWORLD画面にも、写真名、blob URL、Base64、画像内容を含めません。
-
-## 「どう読んだ？」の表示
-
-結果画面には次の趣旨を明記しています。
-
-> v0.2では体験検証のため、手の写真から作ったモックシードをもとにPersonCoreを生成しています。実際の手の特徴解析は今後実装予定です。
+- 画像解析はブラウザ内で完結し、外部APIやサーバーへ送信しません。
+- 写真データ（Base64, Blob URL, ImageData）は永続化せず、Object URLは使用後に適宜解放されます。
+- 共有用データや WorldSpec に元画像データは一切含めません。
 
 ## 検証
 
@@ -112,9 +99,3 @@ palm-manual/
 Get-ChildItem -Recurse -Filter *.js | ForEach-Object { node --check $_.FullName }
 node --test tests/*.test.js
 ```
-
-ブラウザ固有部分は、実画面でニックネーム、左右写真、分析演出、RESULT、reset、狭い画面幅、コンソールエラーを確認します。
-
-## 旧20パターン
-
-`diagnosis.js` の `RESULT_PATTERNS` は参考・フォールバックとして削除せず残しています。v0.2の通常結果は `PalmPersonCore.buildResultData(input)` から生成され、固定20パターンの選択には依存しません。
