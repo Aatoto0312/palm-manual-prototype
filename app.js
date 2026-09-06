@@ -11,9 +11,10 @@
   var el = {};
   var state = {
     name: '',
-    left: null,   // { url, name, size }
-    right: null,  // { url, name, size }
+    left: null,   // { url, name, size, file }
+    right: null,  // { url, name, size, file }
     analyzingToken: 0,
+    imageFeatures: null,
     result: null,
     world: null
   };
@@ -256,7 +257,7 @@
     var before = which === 'left' ? state.left : state.right;
     if (before && before.url) URL.revokeObjectURL(before.url);
 
-    var rec = { url: url, name: file.name || '', size: file.size || 0 };
+    var rec = { url: url, name: file.name || '', size: file.size || 0, file: file };
     if (which === 'left') state.left = rec; else state.right = rec;
 
     preview.src = url;
@@ -295,6 +296,7 @@
   /* ===================== ANALYZING ===================== */
   function startAnalyzing() {
     if (!state.right) return;
+    state.imageFeatures = null;
     show('analyzing');
 
     var token = ++state.analyzingToken;
@@ -305,6 +307,22 @@
         if (token !== state.analyzingToken) return;
         el.analyzeText.textContent = txt;
       }, 900 * i);
+    });
+
+    // 非同期で画像特徴(PalmImageFeatures v1)を抽出
+    var leftSrc = state.left ? (state.left.file || state.left.url) : null;
+    var rightSrc = state.right ? (state.right.file || state.right.url) : null;
+
+    var featPromise = window.PalmImageFeatures
+      ? window.PalmImageFeatures.extractPairFeatures(leftSrc, rightSrc)
+      : Promise.resolve(null);
+
+    featPromise.then(function (features) {
+      if (token !== state.analyzingToken) return;
+      state.imageFeatures = features;
+    }).catch(function () {
+      if (token !== state.analyzingToken) return;
+      state.imageFeatures = null;
     });
 
     // 2.7秒後に結果へ
@@ -322,7 +340,8 @@
       leftFileName: state.left ? state.left.name : '',
       leftSize: state.left ? state.left.size : 0,
       rightFileName: state.right ? state.right.name : '',
-      rightSize: state.right ? state.right.size : 0
+      rightSize: state.right ? state.right.size : 0,
+      imageFeatures: state.imageFeatures
     };
 
     var r = window.PalmDiagnosis.diagnose(input);

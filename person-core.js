@@ -62,19 +62,32 @@
       leftFileName: String(source.leftFileName || ''),
       leftSize: Number(source.leftSize) || 0,
       rightFileName: String(source.rightFileName || ''),
-      rightSize: Number(source.rightSize) || 0
+      rightSize: Number(source.rightSize) || 0,
+      imageFeatures: source.imageFeatures || null
     };
   }
 
-  /** 同じ5入力から同じ32bit seedを作る。 */
+  /** 同じ入力および画像幾何特徴(imageFeatures)から決定的な32bit seedを作る。 */
   function buildSeed(input) {
     var normalized = normalizeInput(input);
+    var featStr = '';
+    if (normalized.imageFeatures) {
+      var feat = normalized.imageFeatures;
+      var l = feat.left || {};
+      var r = feat.right || {};
+      featStr = [
+        'v' + (feat.version || '1.0'),
+        'l_ratio' + (l.palmAspectRatio || 0),
+        'r_ratio' + (r.palmAspectRatio || 0)
+      ].join('_');
+    }
     return hashString([
       normalized.name,
       normalized.leftFileName,
       's' + normalized.leftSize,
       normalized.rightFileName,
       's' + normalized.rightSize,
+      featStr,
       'palm-manual-person-core-v02'
     ].join('|'));
   }
@@ -263,6 +276,7 @@
       version: '0.2',
       seed: seed,
       name: normalized.name,
+      imageFeatures: normalized.imageFeatures || null,
       personCore: core,
       coreAxes: CORE_AXIS_ORDER.map(function (id) {
         var definition = AXIS_DEFINITIONS.find(function (axis) { return axis.id === id; });
@@ -285,7 +299,9 @@
       summary: TYPE_SUMMARIES[typeResult.primaryId],
       deepKeys: DEEP_KEYS,
       deep: buildDeepCopy(core, combinations, typeResult.primaryId, typeResult.secondaryId),
-      howToRead: 'v0.2では体験検証のため、手の写真から作ったモックシードをもとにPersonCoreを生成しています。実際の手の特徴解析は今後実装予定です。'
+      howToRead: normalized.imageFeatures && (normalized.imageFeatures.left.palmAspectRatio > 0 || normalized.imageFeatures.right.palmAspectRatio > 0)
+        ? '手・手のひらの幾何特徴構造(Palm Image Features v1)から生成したシードをもとにPersonCoreを構成しています。手相・輪郭の自動抽出モデルは今後実装予定です。'
+        : 'v0.2では体験検証のため、手の写真から作ったモックシードをもとにPersonCoreを生成しています。実際の手の特徴解析は今後実装予定です。'
     };
   }
 
