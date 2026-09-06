@@ -1,6 +1,7 @@
 /**
- * Palm Manual v0.2 — PersonCore domain model.
- * 画像内容は解析せず、入力メタデータから作るモックseedを使用する。
+ * Palm Manual v0.4 "Hand Observation" — PersonCore domain model.
+ * HandObservation / HandFingerprint から連続値 rawPersonCore (0.00〜1.00) を算出し、
+ * 最終表示用に ★1〜★5 (displayPersonCore) へ量子化します。
  */
 (function (root, factory) {
   var api = factory();
@@ -45,6 +46,10 @@
     { id: 'hidden', label: '隠し機能' }
   ];
 
+  function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+  }
+
   function hashString(value) {
     var text = String(value || '');
     var hash = 0x811c9dc5;
@@ -62,20 +67,25 @@
       leftFileName: String(source.leftFileName || ''),
       leftSize: Number(source.leftSize) || 0,
       rightFileName: String(source.rightFileName || ''),
-      rightSize: Number(source.rightSize) || 0
+      rightSize: Number(source.rightSize) || 0,
+      observation: source.observation || null
     };
   }
 
-  /** 同じ5入力から同じ32bit seedを作る。 */
   function buildSeed(input) {
     var normalized = normalizeInput(input);
+    var fpHash = '';
+    if (normalized.observation && normalized.observation.fingerprint) {
+      fpHash = normalized.observation.fingerprint.combinedHash || '';
+    }
     return hashString([
       normalized.name,
       normalized.leftFileName,
       's' + normalized.leftSize,
       normalized.rightFileName,
       's' + normalized.rightSize,
-      'palm-manual-person-core-v02'
+      fpHash,
+      'palm-manual-person-core-v04'
     ].join('|'));
   }
 
@@ -89,14 +99,80 @@
     };
   }
 
-  /** 各軸を独立に1〜5へ割り当てる。平均や合計の補正はしない。 */
-  function generatePersonCore(seed) {
-    var random = mulberry32(seed);
-    var result = {};
+  /** 0.00〜1.00 の連続値を ★1〜★5 の整数スコアへ量子化 */
+  function quantizeScore(continuousValue) {
+    var c = clamp(Number(continuousValue) || 0, 0, 1);
+    if (c < 0.20) return 1;
+    if (c < 0.40) return 2;
+    if (c < 0.60) return 3;
+    if (c < 0.80) return 4;
+    return 5;
+  }
+
+  /**
+   * HandObservationからSymbolic Mappingルールで連続値 PersonCore (rawPersonCore) を生成
+   */
+  function buildRawPersonCoreFromObservation(obs, seed) {
+    var rng = mulberry32(seed);
+
+    if (!obs || !obs.left || !obs.right) {
+      // フォールバック: seed から連続値を生成
+      var fallback = {};
+      CORE_AXIS_ORDER.forEach(function (axis) {
+        fallback[axis] = clamp(0.1 + rng() * 0.8, 0.05, 0.95);
+      });
+      return fallback;
+    }
+
+    var l = obs.left;
+    var r = obs.right;
+    var diff = obs.differences || {};
+
+    var avgComplexity = (l.complexity + r.complexity) / 2;
+    var avgEdgeDensity = (l.edgeDensity + r.edgeDensity) / 2;
+    var avgOrientation = (l.orientationDiversity + r.orientationDiversity) / 2;
+    var avgCenterDensity = (l.centerDensity + r.centerDensity) / 2;
+    var avgOuterDensity = (l.outerEdgeDensity + r.outerEdgeDensity) / 2;
+
+    var diffComp = diff.complexityDifference || Math.abs(l.complexity - r.complexity);
+    var diffDens = diff.densityDifference || Math.abs(l.edgeDensity - r.edgeDensity);
+    var diffOrient = diff.orientationDifference || Math.abs(l.orientationDiversity - r.orientationDiversity);
+
+    // 微小Variation用 (±0.04)
+    var varCore = (rng() - 0.5) * 0.08;
+    var varPath = (rng() - 0.5) * 0.08;
+    var varCur = (rng() - 0.5) * 0.08;
+    var varConn = (rng() - 0.5) * 0.08;
+    var varIgn = (rng() - 0.5) * 0.08;
+    var varPers = (rng() - 0.5) * 0.08;
+    var varSens = (rng() - 0.5) * 0.08;
+    var varDep = (rng() - 0.5) * 0.08;
+
+    // 象徴変換ルール（科学的性格診断ではなく、画像幾何構造から内面軸への変換）
+    var raw = {
+      core: clamp(0.25 + avgCenterDensity * 0.55 + (1 - diffComp) * 0.20 + varCore, 0.05, 0.95),
+      path: clamp(0.20 + avgOrientation * 0.45 + diffOrient * 0.35 + varPath, 0.05, 0.95),
+      curiosity: clamp(0.15 + avgOrientation * 0.40 + avgOuterDensity * 0.40 + varCur, 0.05, 0.95),
+      connection: clamp(0.20 + avgComplexity * 0.45 + (1 - diffDens) * 0.30 + varConn, 0.05, 0.95),
+      ignition: clamp(0.15 + l.verticalEdgeRatio * 0.40 + avgOuterDensity * 0.40 + varIgn, 0.05, 0.95),
+      persistence: clamp(0.25 + l.horizontalEdgeRatio * 0.45 + (1 - diffOrient) * 0.30 + varPers, 0.05, 0.95),
+      sensor: clamp(0.15 + avgEdgeDensity * 0.45 + diffDens * 0.35 + varSens, 0.05, 0.95),
+      depth: clamp(0.20 + avgCenterDensity * 0.40 + avgComplexity * 0.40 + varDep, 0.05, 0.95)
+    };
+
+    return raw;
+  }
+
+  function generatePersonCore(seed, observation) {
+    var raw = buildRawPersonCoreFromObservation(observation, seed);
+    var display = {};
     CORE_AXIS_ORDER.forEach(function (axis) {
-      result[axis] = 1 + Math.floor(random() * 5);
+      display[axis] = quantizeScore(raw[axis]);
     });
-    return result;
+    return {
+      raw: raw,
+      display: display
+    };
   }
 
   function levelOf(value) {
@@ -184,16 +260,16 @@
     { id: 'ignition_depth', axes: ['ignition', 'depth'], resolve: ignitionDepth }
   ];
 
-  function interpretCombinations(core) {
+  function interpretCombinations(coreDisplay) {
     return COMBINATION_DEFINITIONS.map(function (definition) {
-      var firstLevel = levelOf(core[definition.axes[0]]);
-      var secondLevel = levelOf(core[definition.axes[1]]);
+      var firstLevel = levelOf(coreDisplay[definition.axes[0]]);
+      var secondLevel = levelOf(coreDisplay[definition.axes[1]]);
       var copy = definition.resolve(firstLevel, secondLevel);
       return {
         id: definition.id,
         axes: definition.axes.slice(),
         levels: [firstLevel, secondLevel],
-        values: [core[definition.axes[0]], core[definition.axes[1]]],
+        values: [coreDisplay[definition.axes[0]], coreDisplay[definition.axes[1]]],
         headline: copy.headline,
         text: copy.text,
         tags: copy.tags
@@ -201,15 +277,14 @@
     });
   }
 
-  /** PersonCoreから外向け6属性を採点する。 */
-  function calculateTypeScores(core) {
+  function calculateTypeScores(coreDisplay) {
     var scores = {
-      WIND: core.curiosity * 1.15 + core.path + core.ignition * 0.85,
-      PRISM: core.connection * 1.1 + core.curiosity + core.depth * 0.9,
-      TIDE: core.sensor * 1.7 + core.connection * 0.7 + core.depth * 0.6,
-      ROOT: core.core * 1.25 + core.persistence * 1.35 + core.sensor * 0.4,
-      FORGE: core.ignition * 1.2 + core.persistence + core.core * 0.8,
-      VEIL: core.depth * 1.2 + core.sensor + core.connection * 0.8
+      WIND: coreDisplay.curiosity * 1.15 + coreDisplay.path + coreDisplay.ignition * 0.85,
+      PRISM: coreDisplay.connection * 1.1 + coreDisplay.curiosity + coreDisplay.depth * 0.9,
+      TIDE: coreDisplay.sensor * 1.7 + coreDisplay.connection * 0.7 + coreDisplay.depth * 0.6,
+      ROOT: coreDisplay.core * 1.25 + coreDisplay.persistence * 1.35 + coreDisplay.sensor * 0.4,
+      FORGE: coreDisplay.ignition * 1.2 + coreDisplay.persistence + coreDisplay.core * 0.8,
+      VEIL: coreDisplay.depth * 1.2 + coreDisplay.sensor + coreDisplay.connection * 0.8
     };
     var ranking = TYPE_IDS.slice().sort(function (a, b) {
       if (scores[b] !== scores[a]) return scores[b] - scores[a];
@@ -237,7 +312,7 @@
     return match ? match.label : id;
   }
 
-  function buildDeepCopy(core, combinations, primaryId, secondaryId) {
+  function buildDeepCopy(coreDisplay, combinations, primaryId, secondaryId) {
     var byId = {};
     combinations.forEach(function (item) { byId[item.id] = item; });
     return {
@@ -245,25 +320,95 @@
       thinking: byId.curiosity_path.headline + '。' + byId.curiosity_persistence.text,
       action: byId.ignition_persistence.headline + '。' + byId.ignition_depth.text,
       relations: byId.connection_depth.headline + '。' + byId.curiosity_connection.text,
-      bug: core.sensor >= 4 ? '周囲の変化を受け取りすぎると、何を優先するか見失いやすくなります。情報を減らす時間が必要です。' : '目的や終わりが見えないまま動き続けると、力の使いどころが分からなくなります。小さな区切りが必要です。',
-      restart: core.persistence >= 4 ? 'やることをひとつに絞り、短い休憩の後で続きを再開してください。積み上げたものが、戻る場所になります。' : '五分で終わる一歩を決めてください。勢いではなく、再開しやすい小ささが助けになります。',
-      misread: core.ignition <= 2 ? '動き出すまでが静かなため、迷っているように見えることがあります。実際は、納得できる入口を探している時間です。' : '反応が速いため、考えずに動いているように見えることがあります。実際は、動きながら必要な情報を集めています。',
-      hidden: '「' + axisLabel(CORE_AXIS_ORDER.slice().sort(function (a, b) { return core[b] - core[a]; })[0]) + '」の強さが、普段は別々に見える力をつなぎます。得意な場面だけでなく、困った時の戻り道としても使えます。'
+      bug: coreDisplay.sensor >= 4 ? '周囲の変化を受け取りすぎると、何を優先するか見失いやすくなります。情報を減らす時間が必要です。' : '目的や終わりが見えないまま動き続けると、力の使いどころが分からなくなります。小さな区切りが必要です。',
+      restart: coreDisplay.persistence >= 4 ? 'やることをひとつに絞り、短い休憩の後で続きを再開してください。積み上げたものが、戻る場所になります。' : '五分で終わる一歩を決めてください。勢いではなく、再開しやすい小ささが助けになります。',
+      misread: coreDisplay.ignition <= 2 ? '動き出すまでが静かなため、迷っているように見えることがあります。実際は、納得できる入口を探している時間です。' : '反応が速いため、考えずに動いているように見えることがあります。実際は、動きながら必要な情報を集めています。',
+      hidden: '「' + axisLabel(CORE_AXIS_ORDER.slice().sort(function (a, b) { return coreDisplay[b] - coreDisplay[a]; })[0]) + '」の強さが、普段は別々に見える力をつなぎます。得意な場面だけでなく、困った時の戻り道としても使えます。'
     };
+  }
+
+  /**
+   * 観察した画像特徴の日本語見出し（3〜5件）を生成
+   */
+  function buildObservationHighlights(obs) {
+    if (!obs || !obs.left || !obs.right) return [];
+
+    var highlights = [];
+    var avgComplexity = (obs.left.complexity + obs.right.complexity) / 2;
+    var avgOrientation = (obs.left.orientationDiversity + obs.right.orientationDiversity) / 2;
+    var diff = obs.differences || {};
+
+    // 1. 中央・全体のエッジ複雑さ
+    if (avgComplexity > 0.6) {
+      highlights.push({ label: '手のひらの線情報', value: '繊細で細やか' });
+    } else if (avgComplexity < 0.3) {
+      highlights.push({ label: '手のひらの線情報', value: '明快ですっきりとしている' });
+    } else {
+      highlights.push({ label: '手のひらの線情報', value: 'バランスよく整っている' });
+    }
+
+    // 2. 線の方向の広がり
+    if (avgOrientation > 0.65) {
+      highlights.push({ label: '線の方向のばらつき', value: '多方向へ伸びている' });
+    } else {
+      highlights.push({ label: '線の方向のばらつき', value: '一定の規則に沿っている' });
+    }
+
+    // 3. 左右差
+    var diffComp = diff.complexityDifference || Math.abs(obs.left.complexity - obs.right.complexity);
+    if (diffComp > 0.25) {
+      highlights.push({ label: '左右の手の特徴差', value: '変化が大きい（左右で動きが異なる）' });
+    } else if (diffComp < 0.1) {
+      highlights.push({ label: '左右の手の特徴差', value: '極めて揃っている' });
+    } else {
+      highlights.push({ label: '左右の手の特徴差', value: 'ほどよく協調している' });
+    }
+
+    // 4. 領域密度（中央と周辺）
+    var avgCenter = (obs.left.centerDensity + obs.right.centerDensity) / 2;
+    if (avgCenter > 0.5) {
+      highlights.push({ label: '中心部の密度', value: '中心軸に引き締まりがある' });
+    } else {
+      highlights.push({ label: '中心部の密度', value: 'ゆったりと広がっている' });
+    }
+
+    return highlights;
   }
 
   function buildResultData(input) {
     var normalized = normalizeInput(input);
     var seed = buildSeed(normalized);
-    var core = generatePersonCore(seed);
-    var combinations = interpretCombinations(core);
-    var typeResult = calculateTypeScores(core);
+    var generated = generatePersonCore(seed, normalized.observation);
+    var rawCore = generated.raw;
+    var displayCore = generated.display;
+
+    var combinations = interpretCombinations(displayCore);
+    var typeResult = calculateTypeScores(displayCore);
     var title = TYPE_TITLES[typeResult.primaryId] + ' × ' + TYPE_TITLES[typeResult.secondaryId];
+
+    var highlights = buildObservationHighlights(normalized.observation);
+
+    var qualityNote = null;
+    if (normalized.observation && normalized.observation.left && normalized.observation.left.quality) {
+      var q = normalized.observation.left.quality;
+      if (q.status !== 'ok') {
+        qualityNote = q.message;
+      }
+    }
+
+    var howToRead = normalized.observation
+      ? 'v0.4では、左右の手画像から読み取った線の密度、方向の広がり、中心軸の収まり、左右差などの画像特徴を、Palm Manual独自の象徴ルールでPersonCoreへ変換しています。本物の手相鑑定や医学的・科学的分析ではありません。'
+      : 'v0.2/v0.3互換のモックシードをもとにPersonCoreを生成しています。手画像を入力するとより詳細な画像特徴が反映されます。';
+
     return {
-      version: '0.2',
+      version: '0.4',
       seed: seed,
       name: normalized.name,
-      personCore: core,
+      rawPersonCore: rawCore,
+      personCore: displayCore, // 既存ビュー互換（1〜5の整数値）
+      observation: normalized.observation || null,
+      observationHighlights: highlights,
+      qualityNote: qualityNote,
       coreAxes: CORE_AXIS_ORDER.map(function (id) {
         var definition = AXIS_DEFINITIONS.find(function (axis) { return axis.id === id; });
         return {
@@ -271,7 +416,8 @@
           label: definition.label,
           category: definition.category,
           description: definition.description,
-          value: core[id]
+          value: displayCore[id],
+          rawValue: rawCore[id]
         };
       }),
       categories: CATEGORIES.map(function (category) {
@@ -284,8 +430,8 @@
       title: title,
       summary: TYPE_SUMMARIES[typeResult.primaryId],
       deepKeys: DEEP_KEYS,
-      deep: buildDeepCopy(core, combinations, typeResult.primaryId, typeResult.secondaryId),
-      howToRead: 'v0.2では体験検証のため、手の写真から作ったモックシードをもとにPersonCoreを生成しています。実際の手の特徴解析は今後実装予定です。'
+      deep: buildDeepCopy(displayCore, combinations, typeResult.primaryId, typeResult.secondaryId),
+      howToRead: howToRead
     };
   }
 
@@ -298,10 +444,11 @@
     DEEP_KEYS: DEEP_KEYS,
     hashString: hashString,
     buildSeed: buildSeed,
+    quantizeScore: quantizeScore,
+    buildRawPersonCoreFromObservation: buildRawPersonCoreFromObservation,
     generatePersonCore: generatePersonCore,
     interpretCombinations: interpretCombinations,
     calculateTypeScores: calculateTypeScores,
     buildResultData: buildResultData
   };
 });
-

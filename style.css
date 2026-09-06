@@ -472,6 +472,75 @@ body {
   text-shadow: none;
 }
 
+/* ===================== SHOOTING GUIDE ===================== */
+.shooting-guide {
+  margin: 12px 0 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(220, 205, 180, 0.4);
+  font-size: 12px;
+  text-align: left;
+}
+
+.shooting-guide-title {
+  margin: 0 0 4px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.shooting-guide-list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+/* ===================== OBSERVATION HIGHLIGHTS ===================== */
+.observation-panel {
+  margin: 16px 0 24px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(210, 195, 170, 0.5);
+  text-align: left;
+}
+
+.observation-title {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.observation-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.observation-chip {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f3edd9;
+  color: #5c4e38;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.observation-chip strong {
+  color: #3b3022;
+}
+
+.quality-note {
+  margin: 10px 0 0;
+  font-size: 11px;
+  color: #b46d12;
+  background: #fff8e7;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
 /* セクション */
 .result-section {
   background: var(--panel);

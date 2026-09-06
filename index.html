@@ -60,7 +60,7 @@
     <section id="screen-left" class="screen" data-screen="left" aria-hidden="true">
       <p class="step-label">STEP&nbsp;2&nbsp;/&nbsp;4</p>
       <h2 class="screen-title">まず、左手を見せてください</h2>
-      <p class="screen-desc">手のひら全体が入るように、明るい場所で撮ってください。</p>
+        <p class="screen-desc">指先から手首まで入るように、明るい場所で撮ってください。</p>
 
       <div class="photo-area" id="leftPhotoArea">
         <label class="drop-zone" for="inputLeft" id="leftDropZone">
@@ -71,6 +71,15 @@
         <img id="leftPreview" class="photo-preview" alt="左手のプレビュー" hidden>
         <input type="file" id="inputLeft" class="visually-hidden" accept="image/*" capture="environment">
       </div>
+
+        <div class="shooting-guide">
+          <p class="shooting-guide-title">💡 きれいに特徴を拾うコツ</p>
+          <ul class="shooting-guide-list">
+            <li>手のひら全体（指先〜手首）を枠内に入れる</li>
+            <li>指を自然に軽く開いて真上から撮る</li>
+            <li>明るい場所でシンプルな背景を選ぶ</li>
+          </ul>
+        </div>
 
       <div class="nav-row">
         <button type="button" class="btn btn-ghost" data-back>戻る</button>
@@ -94,6 +103,15 @@
         <img id="rightPreview" class="photo-preview" alt="右手のプレビュー" hidden>
         <input type="file" id="inputRight" class="visually-hidden" accept="image/*" capture="environment">
       </div>
+
+        <div class="shooting-guide">
+          <p class="shooting-guide-title">💡 きれいに特徴を拾うコツ</p>
+          <ul class="shooting-guide-list">
+            <li>手のひら全体（指先〜手首）を枠内に入れる</li>
+            <li>指を自然に軽く開いて真上から撮る</li>
+            <li>明るい場所でシンプルな背景を選ぶ</li>
+          </ul>
+        </div>
 
       <div class="nav-row">
         <button type="button" class="btn btn-ghost" data-back>戻る</button>
@@ -143,6 +161,13 @@
       </div>
 
       <p class="result-summary" id="resultSummary">あなたらしさを一言で紹介します。</p>
+
+      <!-- v0.4 観察特徴ハイライト -->
+      <section id="observationContainer" class="observation-panel" hidden>
+        <h4 class="observation-title">📷 手画像から観察された特徴</h4>
+        <div id="observationHighlights" class="observation-chips"></div>
+        <p id="qualityNoteMessage" class="quality-note" hidden></p>
+      </section>
 
       <section class="result-section core-section" aria-labelledby="personCoreHeading">
         <div class="section-intro">
@@ -249,6 +274,7 @@
   </div>
 
   <script src="types.js"></script>
+  <script src="hand-observation.js"></script>
   <script src="person-core.js"></script>
   <script src="diagnosis.js"></script>
   <script src="result-view.js"></script>

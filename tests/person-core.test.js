@@ -49,7 +49,8 @@ test('ファイルサイズが変わればseedが変わる', () => {
 });
 
 test('PersonCoreは8軸をすべて整数1〜5で返す', () => {
-  const core = personCore.generatePersonCore(personCore.buildSeed(fixture));
+  const gen = personCore.generatePersonCore(personCore.buildSeed(fixture));
+  const core = gen.display;
   assert.deepEqual(Object.keys(core), AXES);
   for (const axis of AXES) {
     assert.equal(Number.isInteger(core[axis]), true, axis);
@@ -60,7 +61,8 @@ test('PersonCoreは8軸をすべて整数1〜5で返す', () => {
 test('平均への補正をせず複数の1や5を含む尖った結果を生成できる', () => {
   let found = null;
   for (let seed = 0; seed < 10000; seed += 1) {
-    const values = Object.values(personCore.generatePersonCore(seed));
+    const gen = personCore.generatePersonCore(seed);
+    const values = Object.values(gen.display);
     const extremes = values.filter((value) => value === 1 || value === 5);
     if (extremes.length >= 3) {
       found = values;
@@ -118,7 +120,7 @@ test('結果データはPersonCore中心の表示契約を満たす', () => {
   assert.doesNotMatch(result.howToRead, /生命線|頭脳線|指の特徴/);
 });
 
-test('PalmDiagnosisの入口はv0.2結果を返し旧20パターンを保持する', () => {
+test('PalmDiagnosisの入口は結果データと旧20パターンを保持する', () => {
   const context = vm.createContext({ console });
   context.window = context;
   context.globalThis = context;
@@ -128,7 +130,7 @@ test('PalmDiagnosisの入口はv0.2結果を返し旧20パターンを保持す�
     });
   }
   const result = context.PalmDiagnosis.diagnose(fixture);
-  assert.equal(result.version, '0.2');
+  assert.equal(result.version, '0.4');
   assert.equal(Object.keys(result.personCore).length, 8);
   assert.equal(context.PalmDiagnosis.RESULT_PATTERNS.length, 20);
   assert.equal(context.PalmDiagnosis.buildSeed(fixture), personCore.buildSeed(fixture));

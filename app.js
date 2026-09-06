@@ -11,9 +11,10 @@
   var el = {};
   var state = {
     name: '',
-    left: null,   // { url, name, size }
-    right: null,  // { url, name, size }
+    left: null,   // { url, name, size, file }
+    right: null,  // { url, name, size, file }
     analyzingToken: 0,
+    observation: null,
     result: null,
     world: null
   };
@@ -103,6 +104,10 @@
     el.moreCombinations = $('moreCombinations');
     el.deepList = $('deepList');
     el.howToReadText = $('howToReadText');
+
+    el.observationContainer = $('observationContainer');
+    el.observationHighlights = $('observationHighlights');
+    el.qualityNotice = $('qualityNoteMessage');
 
     el.btnWorld = $('btnWorld');
     el.btnFriends = $('btnFriends');
@@ -256,7 +261,7 @@
     var before = which === 'left' ? state.left : state.right;
     if (before && before.url) URL.revokeObjectURL(before.url);
 
-    var rec = { url: url, name: file.name || '', size: file.size || 0 };
+    var rec = { url: url, name: file.name || '', size: file.size || 0, file: file };
     if (which === 'left') state.left = rec; else state.right = rec;
 
     preview.src = url;
@@ -295,6 +300,7 @@
   /* ===================== ANALYZING ===================== */
   function startAnalyzing() {
     if (!state.right) return;
+    state.observation = null;
     show('analyzing');
 
     var token = ++state.analyzingToken;
@@ -305,6 +311,22 @@
         if (token !== state.analyzingToken) return;
         el.analyzeText.textContent = txt;
       }, 900 * i);
+    });
+
+    // 非同期で画像ピクセル解析 HandObservation を実行
+    var leftSrc = state.left ? (state.left.file || state.left.url) : null;
+    var rightSrc = state.right ? (state.right.file || state.right.url) : null;
+
+    var observePromise = window.HandObservation
+      ? window.HandObservation.observePair(leftSrc, rightSrc)
+      : Promise.resolve(null);
+
+    observePromise.then(function (obs) {
+      if (token !== state.analyzingToken) return;
+      state.observation = obs;
+    }).catch(function () {
+      if (token !== state.analyzingToken) return;
+      state.observation = null;
     });
 
     // 2.7秒後に結果へ
@@ -322,7 +344,8 @@
       leftFileName: state.left ? state.left.name : '',
       leftSize: state.left ? state.left.size : 0,
       rightFileName: state.right ? state.right.name : '',
-      rightSize: state.right ? state.right.size : 0
+      rightSize: state.right ? state.right.size : 0,
+      observation: state.observation
     };
 
     var r = window.PalmDiagnosis.diagnose(input);
@@ -347,6 +370,36 @@
     // 固有愛称
     el.resultTitle.textContent = '《' + r.title + '》';
     el.resultSummary.textContent = r.summary;
+
+    // v0.4 観察特徴ハイライトの描画
+    if (el.observationContainer && el.observationHighlights) {
+      el.observationHighlights.innerHTML = '';
+      if (r.observationHighlights && r.observationHighlights.length > 0) {
+        el.observationContainer.hidden = false;
+        r.observationHighlights.forEach(function (item) {
+          var chip = document.createElement('div');
+          chip.className = 'observation-chip';
+          var label = document.createElement('strong');
+          label.textContent = item.label + '：';
+          var val = document.createElement('span');
+          val.textContent = item.value;
+          chip.appendChild(label);
+          chip.appendChild(val);
+          el.observationHighlights.appendChild(chip);
+        });
+      } else {
+        el.observationContainer.hidden = true;
+      }
+    }
+
+    if (el.qualityNotice) {
+      if (r.qualityNote) {
+        el.qualityNotice.textContent = '撮影のアドバイス：' + r.qualityNote;
+        el.qualityNotice.hidden = false;
+      } else {
+        el.qualityNotice.hidden = true;
+      }
+    }
 
     // PersonCore 8軸
     el.personCoreGrid.innerHTML = '';
